@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Fingerprint Information</title>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        h2 {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Browser Fingerprint Details</h1>
+    <button id="get-fingerprint">Get Fingerprint Information</button>
+    <div id="fingerprint-info"></div>
+
+    <script>
+        // Function to safely access component values
+        function getComponentValue(component) {
+            return component && component.value ? component.value : 'N/A';
+        }
+
+        // Function to format JSON data for display
+        function formatJSON(json) {
+            return JSON.stringify(json, null, 2);
+        }
+
+        document.getElementById('get-fingerprint').addEventListener('click', async () => {
+            const infoDiv = document.getElementById('fingerprint-info');
+            infoDiv.innerHTML = 'Generating fingerprint...';
+
+            try {
+                // Load the FingerprintJS agent
+                const fp = await FingerprintJS.load();
+
+                // Get the fingerprint data
+                const result = await fp.get();
+                const components = result.components;
+
+                // Prepare the display of the information, with null-checking for each value
+                const detailedInfo = {
+                    "Fingerprint ID (Visitor ID)": result.visitorId,
+                    "User Agent": getComponentValue(components.userAgent),
+                    "Language": getComponentValue(components.language),
+                    "Color Depth": getComponentValue(components.colorDepth),
+                    "Device Memory": getComponentValue(components.deviceMemory) + " GB",
+                    "Screen Resolution": getComponentValue(components.screenResolution).join(' x ') + " pixels",
+                    "Hardware Concurrency (CPU Cores)": getComponentValue(components.hardwareConcurrency),
+                    "Timezone": getComponentValue(components.timezone),
+                    "Session Storage Supported": getComponentValue(components.sessionStorage),
+                    "Local Storage Supported": getComponentValue(components.localStorage),
+                    "IndexedDB Supported": getComponentValue(components.indexedDb),
+                    "Platform": getComponentValue(components.platform),
+                    "Plugins": getComponentValue(components.plugins).join(', '),
+                    "Canvas Fingerprint": getComponentValue(components.canvas),
+                    "WebGL Vendor & Renderer": getComponentValue(components.webglVendorAndRenderer),
+                    "Touch Support": getComponentValue(components.touchSupport).maxTouchPoints + " touch points",
+                    "Fonts": getComponentValue(components.fonts).join(', '),
+                    "Audio Fingerprint": getComponentValue(components.audio),
+                    "Battery": components.battery ? `Charging: ${components.battery.value.charging}, Battery Level: ${components.battery.value.level * 100}%` : "Battery information not available",
+                    "Ad Block Enabled": getComponentValue(components.adBlock),
+                    "Number of Media Devices": getComponentValue(components.mediaDevices)
+                };
+
+                // Display the formatted data
+                infoDiv.innerHTML = `<h2>Fingerprint Data</h2><pre>${formatJSON(detailedInfo)}</pre>`;
+
+            } catch (error) {
+                // Handle any errors
+                infoDiv.innerHTML = 'Error generating fingerprint: ' + error.message;
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proof of Work with Browser Fingerprinting</title>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+</head>
+<body>
+    <h1>Browser Fingerprinting with Proof of Work</h1>
+    <button id="start-pow">Start Proof of Work</button>
+    <div id="status"></div>
+    
+    <script>
+        // Function to perform Proof of Work (PoW)
+        function proofOfWork(difficulty) {
+            let nonce = 0;
+            let hash = '';
+            const target = '0'.repeat(difficulty);
+
+            while (!hash.startsWith(target)) {
+                nonce++;
+                hash = sha256(nonce.toString());
+            }
+
+            return nonce;  // This nonce is the "solution" to the PoW
+        }
+
+        // Simple SHA-256 Hash Function (using SubtleCrypto API)
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Start the PoW and Browser Fingerprinting Process
+        document.getElementById('start-pow').addEventListener('click', async () => {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = 'Generating Fingerprint...';
+
+            // Load the FingerprintJS agent and generate the fingerprint
+            const fp = await FingerprintJS.load();
+            const result = await fp.get();
+            const fingerprint = result.visitorId;
+
+            // Display the fingerprint
+            statusDiv.innerHTML = `Fingerprint: ${fingerprint}<br>Starting Proof of Work...`;
+
+            // Start Proof of Work (e.g., difficulty level 4 for 4 leading zeros)
+            const difficulty = 4;
+            const nonce = proofOfWork(difficulty);
+
+            // After PoW, send the fingerprint and nonce to the server
+            statusDiv.innerHTML += `<br>Proof of Work Completed!<br>Nonce: ${nonce}`;
+            statusDiv.innerHTML += `<br>Submitting data to server...`;
+
+            // Simulate sending to server
+            const response = await fetch('/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fingerprint, nonce })
+            });
+
+            if (response.ok) {
+                statusDiv.innerHTML += `<br>Data submitted successfully!`;
+            } else {
+                statusDiv.innerHTML += `<br>Submission failed.`;
+            }
+        });
+    </script>
+</body>
+</html>
